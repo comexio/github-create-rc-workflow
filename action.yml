@@ -104,33 +104,32 @@ runs:
         git push --set-upstream origin rc/${{env.TAG}} || echo
       fi
     shell: bash
+  # - name: Create GH Release
+  #   if: ${{ inputs.ORIGIN == 'fc' }}
+  #   id: create_release
+  #   uses: actions/create-release@v1
+  #   with:
+  #     tag_name: ${{env.TAG}}
+  #     release_name: Release ${{env.TAG}}
+  #     body: |
+  #       Changes in this Release
+  #       - Release from: rc/${{env.TAG}}
+  #       - Release date: ${{env.CURRENT_DATE}}
+  #       - Commit: ${{github.sha}}
+  #     draft: false
+  #     prerelease: true
 
-  - name: Create GH Release
-    if: ${{ inputs.ORIGIN == 'fc' }}
-    id: create_release
-    uses: actions/create-release@v1
-    with:
-      tag_name: ${{env.TAG}}
-      release_name: Release ${{env.TAG}}
-      body: |
-        Changes in this Release
-        - Release from: rc/${{env.TAG}}
-        - Release date: ${{env.CURRENT_DATE}}
-        - Commit: ${{github.sha}}
-      draft: false
-      prerelease: true
-
-  - name: Create GH Release
-    if: ${{ inputs.ORIGIN == 'hotfix' }}
-    id: create_release_hotfix
-    uses: actions/create-release@v1
-    with:
-      tag_name: ${{env.TAG}}
-      release_name: Hotfix ${{env.TAG}}
-      body: |
-        Changes in this Hotfix
-        - Hotfix from: rc/${{env.TAG}}
-        - Hotfix date: ${{env.CURRENT_DATE}}
-        - Commit: ${{github.sha}}
-      draft: false
-      prerelease: true
+  # - name: Create GH Release
+  #   if: ${{ inputs.ORIGIN == 'hotfix' }}
+  #   id: create_release_hotfix
+  #   uses: actions/create-release@v1
+  #   with:
+  #     tag_name: ${{env.TAG}}
+  #     release_name: Hotfix ${{env.TAG}}
+  #     body: |
+  #       Changes in this Hotfix
+  #       - Hotfix from: rc/${{env.TAG}}
+  #       - Hotfix date: ${{env.CURRENT_DATE}}
+  #       - Commit: ${{github.sha}}
+  #     draft: false
+  #     prerelease: true
