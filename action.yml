@@ -22,12 +22,20 @@ runs:
     run: chown -R $(id -u):$(id -g) $PWD
     shell: bash
 
+  # - name: Get latest release
+  #   id: latest_release
+  #   uses: kaliber5/action-get-release@v1
+  #   with:
+  #     token: ${{ inputs.CICD_GITHUB_TOKEN }}
+  #     latest: true
+
   - name: Get latest release
     id: latest_release
-    uses: kaliber5/action-get-release@v1
-    with:
-      token: ${{ inputs.CICD_GITHUB_TOKEN }}
-      latest: true
+    run: |
+      LATEST_RELEASE=$(curl -s -H "Authorization: token ${{ inputs.CICD_GITHUB_TOKEN }}" \
+        "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r '.tag_name')
+      echo "LATEST_RELEASE=$LATEST_RELEASE" >> $GITHUB_ENV
+    shell: bash
 
   - name: Check Current Branch
     id: current
