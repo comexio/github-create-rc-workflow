@@ -29,12 +29,18 @@ runs:
   #     token: ${{ inputs.CICD_GITHUB_TOKEN }}
   #     latest: true
 
-  - name: Get latest release
-    id: latest_release
+  - name: Get latest tag
+    id: latest_tag
     run: |
-      LATEST_RELEASE=$(curl -s -H "Authorization: token ${{ inputs.CICD_GITHUB_TOKEN }}" \
-        "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r '.tag_name')
-      echo "LATEST_RELEASE=$LATEST_RELEASE" >> $GITHUB_ENV
+      LATEST_TAG=$(git ls-remote --tags --sort=-v:refname origin | awk -F'/' 'NR==1{print $3}')
+
+      if [[ -z "$LATEST_TAG" || "$LATEST_TAG" == "null" ]]; then
+        echo "No tag found."
+        exit 1
+      fi
+
+      echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
+      echo "Última tag encontrada: $LATEST_TAG"
     shell: bash
 
   - name: Check Current Branch
