@@ -26,7 +26,7 @@ runs:
     id: latest_release
     uses: kaliber5/action-get-release@v1
     with:
-      token: ${{ inputs.GITHUB_TOKEN }}
+      token: ${{ inputs.CICD_GITHUB_TOKEN }}
       latest: true
 
   - name: Check Current Branch
