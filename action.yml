@@ -55,10 +55,10 @@ runs:
     run: |
       if [[ ${{ inputs.ORIGIN }} == 'fc' ]]; then
         echo "------------  FEATURE CANDIDATE - RC  ------------"
-        echo "TAG=v$(semver bump minor v${{env.TAG}})" >> $GITHUB_ENV
+        echo "TAG=v$(semver bump minor ${{env.TAG}})" >> $GITHUB_ENV
       else
         echo "------------  HOTFIX - RC  ------------"
-        echo "TAG=v$(semver bump patch v${{env.TAG}})" >> $GITHUB_ENV
+        echo "TAG=v$(semver bump patch ${{env.TAG}})" >> $GITHUB_ENV
       fi
     shell: bash
 
