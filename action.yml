@@ -67,20 +67,18 @@ runs:
     run: |
       echo "Verificando se a branch rc/${{ env.TAG }} existe via API..."
 
-      # Encode '/' como '%2F' para evitar problemas na URL da API do GitHub
-      ENCODED_BRANCH=$(echo "${{ env.TAG }}" | sed 's|/|%2F|g')
-
       RESPONSE=$(curl -s -H "Authorization: Bearer ${{ inputs.CICD_GITHUB_TOKEN }}" \
         -H "Accept: application/vnd.github+json" \
-        "https://api.github.com/repos/${{ github.repository }}/branches/$ENCODED_BRANCH")
+        "https://api.github.com/repos/${{ github.repository }}/branches?per_page=100")
 
-      BRANCH_EXISTS=$(echo "$RESPONSE" | jq -r '.name // empty')
+      # Filtra a branch pelo nome exato
+      BRANCH_EXISTS=$(echo "$RESPONSE" | jq -r --arg BRANCH_NAME "rc/${{ env.TAG }}" '.[] | select(.name == $BRANCH_NAME) | .name')
 
       if [[ -n "$BRANCH_EXISTS" ]]; then
-        echo "A branch ${{ env.TAG }} já existe."
+        echo "A branch rc/${{ env.TAG }} já existe."
         echo "exists=true" >> $GITHUB_ENV
       else
-        echo "A branch ${{ env.TAG }} não existe."
+        echo "A branch rc/${{ env.TAG }} não existe."
         echo "exists=false" >> $GITHUB_ENV
       fi
     env:
