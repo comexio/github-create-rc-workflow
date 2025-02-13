@@ -65,11 +65,14 @@ runs:
     shell: bash
     id: check-branch-exists
     run: |
-      echo "Verificando se a branch ${{ env.TAG }} existe via API..."
+      echo "Verificando se a branch rc/${{ env.TAG }} existe via API..."
+
+      # Encode '/' como '%2F' para evitar problemas na URL da API do GitHub
+      ENCODED_BRANCH=$(echo "${{ env.TAG }}" | sed 's|/|%2F|g')
 
       RESPONSE=$(curl -s -H "Authorization: Bearer ${{ inputs.CICD_GITHUB_TOKEN }}" \
         -H "Accept: application/vnd.github+json" \
-        "https://api.github.com/repos/${{ github.repository }}/branches/${{ env.TAG }}")
+        "https://api.github.com/repos/${{ github.repository }}/branches/$ENCODED_BRANCH")
 
       BRANCH_EXISTS=$(echo "$RESPONSE" | jq -r '.name // empty')
 
