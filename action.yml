@@ -93,7 +93,20 @@ runs:
   - if: env.exists == 'false'
     shell: bash
     run: |
-      echo "New Release Candidate is rc/${{ env.TAG }}"
+      echo "Verificando se já existe uma pre-release aberta..."
+
+      # Fazendo requisição para listar as releases e filtrando pre-releases
+      PRERELEASE_EXISTS=$(curl -s -H "Authorization: Bearer ${{ inputs.CICD_GITHUB_TOKEN }}" \
+        -H "Accept: application/vnd.github+json" \
+        "https://api.github.com/repos/${{ github.repository }}/releases?per_page=50" | \
+        jq -r '[.[] | select(.prerelease == true)] | length')
+
+      if [[ "$PRERELEASE_EXISTS" -gt 0 ]]; then
+        echo "::error::Já existe uma pre-release aberta. Cancele ou finalize a existente antes de criar uma nova."
+        exit 1
+      fi
+
+      echo "Nenhuma pre-release encontrada. Criando nova Release Candidate: rc/${{ env.TAG }}"
 
       # Atualizando a branch main
       git fetch origin
