@@ -50,15 +50,33 @@ runs:
       chmod +x /usr/local/bin/semver
     shell: bash
 
-  - name: Valid Origin
+  - name: validar origem de semver
     run: |
-      if [[ ${{ inputs.ORIGIN }} == 'fc' ]]; then
-        echo "------------  FEATURE CANDIDATE - RC  ------------"
-        echo "TAG=$(semver bump minor ${{env.TAG}})" >> $GITHUB_ENV
-      else
-        echo "------------  HOTFIX - RC  ------------"
-        echo "TAG=$(semver bump patch ${{env.TAG}})" >> $GITHUB_ENV
-      fi
+      # Obtém a branch atual do runner
+      BRANCH_NAME=$(echo "${{ github.ref }}" | sed 's|refs/heads/||')
+
+      echo "Branch detectada: $BRANCH_NAME"
+
+      # Define o tipo de release (Release ou Hotfix) e a estratégia de versionamento
+      case "$BRANCH_NAME" in
+        fc/* | feature/*)
+          echo "Detectado Feature Candidate ou Feature Branch - Incrementando Minor"
+          echo "TAG=$(semver bump minor ${{ env.TAG }})" >> $GITHUB_ENV
+          echo "RELEASE_TYPE=Release" >> $GITHUB_ENV
+          ;;
+        fix/* | hotfix/* | bugfix/*)
+          echo "Detectado Fix, Hotfix ou Bugfix - Incrementando Patch"
+          echo "TAG=$(semver bump patch ${{ env.TAG }})" >> $GITHUB_ENV
+          echo "RELEASE_TYPE=Hotfix" >> $GITHUB_ENV
+          ;;
+        *)
+          echo "Prefixo desconhecido, falhando o processo."
+          exit 1
+          ;;
+      esac
+
+      echo "Nova TAG gerada: $TAG"
+      echo "Tipo de release: $RELEASE_TYPE"
     shell: bash
 
   - name: Verificar se a branch já existe via API
@@ -124,8 +142,8 @@ runs:
         echo "Criando nova release e tag: rc/${{ env.TAG }}"
 
         gh release create "${{ env.TAG }}" \
-          --title "${{ inputs.ORIGIN == 'fc' && 'Release' || 'Hotfix' }} ${{ env.TAG }}" \
-          --notes "**Changes in this ${{ inputs.ORIGIN == 'fc' && 'Release' || 'Hotfix' }}**\n\n- Origin: rc/${{ env.TAG }}\n- Release date: $CURRENT_DATE\n- Commit: ${{ github.sha }}" \
+          --title "$RELEASE_TYPE ${{ env.TAG }}" \
+          --notes "**Changes in this $RELEASE_TYPE**\n\n- Origin: rc/${{ env.TAG }}\n- Release date: $CURRENT_DATE\n- Commit: ${{ github.sha }}" \
           --draft=false \
           --prerelease
       fi
