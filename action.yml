@@ -93,7 +93,7 @@ runs:
   - if: env.exists == 'false'
     shell: bash
     run: |
-      set -e  # Para interromper a execução em caso de erro
+      set -e  # Para interromper em caso de erro
 
       echo "New Release Candidate is rc/${{ env.TAG }}"
 
@@ -102,9 +102,10 @@ runs:
       git checkout main
       git pull --rebase origin main
 
-      # Criando a nova branch RC (se não existir)
-      if git show-ref --quiet refs/heads/rc/${{ env.TAG }}; then
-        echo "Branch rc/${{ env.TAG }} já existe, atualizando..."
+      # Verifica se a branch RC já existe no repositório remoto
+      if git ls-remote --exit-code --heads origin rc/${{ env.TAG }}; then
+        echo "Branch rc/${{ env.TAG }} já existe. Atualizando..."
+        git fetch origin rc/${{ env.TAG }}
         git checkout rc/${{ env.TAG }}
         git pull --rebase origin rc/${{ env.TAG }}
       else
@@ -127,10 +128,16 @@ runs:
         --draft=false \
         --prerelease
 
-      # Criando PR para merge na branch RC
-      gh pr create --base="rc/${{ env.TAG }}" \
-                  --head="${{ steps.current.outputs.CURRENT_BRANCH }}" \
-                  --title="[FC] branch ${{ steps.current.outputs.CURRENT_BRANCH }} to RC/${{ env.TAG }}" \
-                  --body="Pull Request FC to RC"
+      # Verificando se há commits entre as branches antes de criar o PR
+      if git rev-list --count rc/${{ env.TAG }}..${{ steps.current.outputs.CURRENT_BRANCH }} > 0; then
+        echo "Criando PR para merge na branch RC"
+
+        gh pr create --base="rc/${{ env.TAG }}" \
+                    --head="${{ steps.current.outputs.CURRENT_BRANCH }}" \
+                    --title="[FC] branch ${{ steps.current.outputs.CURRENT_BRANCH }} to RC/${{ env.TAG }}" \
+                    --body="Pull Request FC to RC"
+      else
+        echo "Nenhum commit novo entre rc/${{ env.TAG }} e ${{ steps.current.outputs.CURRENT_BRANCH }}. PR não será criado."
+      fi
     env:
       GITHUB_TOKEN: ${{ inputs.CICD_GITHUB_TOKEN }}
