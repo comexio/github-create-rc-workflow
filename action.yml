@@ -93,7 +93,7 @@ runs:
   - if: env.exists == 'false'
     shell: bash
     run: |
-      set -e  # Para interromper em caso de erro
+      set -e  # Interrompe o script em caso de erro
 
       echo "New Release Candidate is rc/${{ env.TAG }}"
 
@@ -111,10 +111,8 @@ runs:
       else
         echo "Criando nova branch rc/${{ env.TAG }}"
         git checkout -b rc/${{ env.TAG }}
+        git push --set-upstream origin rc/${{ env.TAG }}
       fi
-
-      # Empurrando a nova branch ou atualizando a existente
-      git push --set-upstream origin rc/${{ env.TAG }} || git push --force-with-lease origin rc/${{ env.TAG }}
 
       # Obtendo a data atual
       CURRENT_DATE=$(date +"%Y-%m-%d")
@@ -129,7 +127,9 @@ runs:
         --prerelease
 
       # Verificando se há commits entre as branches antes de criar o PR
-      if git rev-list --count rc/${{ env.TAG }}..${{ steps.current.outputs.CURRENT_BRANCH }} > 0; then
+      COMMITS_A_MAIS=$(git rev-list --count ${{ steps.current.outputs.CURRENT_BRANCH }}..rc/${{ env.TAG }})
+
+      if [[ "$COMMITS_A_MAIS" -gt 0 ]]; then
         echo "Criando PR para merge na branch RC"
 
         gh pr create --base="rc/${{ env.TAG }}" \
