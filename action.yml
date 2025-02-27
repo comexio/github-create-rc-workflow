@@ -93,16 +93,27 @@ runs:
   - if: env.exists == 'false'
     shell: bash
     run: |
+      set -e  # Para interromper a execução em caso de erro
+
       echo "New Release Candidate is rc/${{ env.TAG }}"
 
       # Atualizando a branch main
       git fetch origin
       git checkout main
-      git pull origin main
+      git pull --rebase origin main
 
-      # Criando a nova branch RC
-      git checkout -b rc/${{ env.TAG }}
-      git push --set-upstream origin rc/${{ env.TAG }}
+      # Criando a nova branch RC (se não existir)
+      if git show-ref --quiet refs/heads/rc/${{ env.TAG }}; then
+        echo "Branch rc/${{ env.TAG }} já existe, atualizando..."
+        git checkout rc/${{ env.TAG }}
+        git pull --rebase origin rc/${{ env.TAG }}
+      else
+        echo "Criando nova branch rc/${{ env.TAG }}"
+        git checkout -b rc/${{ env.TAG }}
+      fi
+
+      # Empurrando a nova branch ou atualizando a existente
+      git push --set-upstream origin rc/${{ env.TAG }} || git push --force-with-lease origin rc/${{ env.TAG }}
 
       # Obtendo a data atual
       CURRENT_DATE=$(date +"%Y-%m-%d")
@@ -117,9 +128,9 @@ runs:
         --prerelease
 
       # Criando PR para merge na branch RC
-      gh pr create --base="rc/${{env.TAG}}" \
-                   --head="${{ steps.current.outputs.CURRENT_BRANCH }}" \
-                   --title="[FC] branch ${{ steps.current.outputs.CURRENT_BRANCH }} to RC/${{env.TAG}}" \
-                   --body="Pull Request FC to RC"
+      gh pr create --base="rc/${{ env.TAG }}" \
+                  --head="${{ steps.current.outputs.CURRENT_BRANCH }}" \
+                  --title="[FC] branch ${{ steps.current.outputs.CURRENT_BRANCH }} to RC/${{ env.TAG }}" \
+                  --body="Pull Request FC to RC"
     env:
       GITHUB_TOKEN: ${{ inputs.CICD_GITHUB_TOKEN }}
