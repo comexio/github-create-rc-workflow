@@ -117,14 +117,18 @@ runs:
       # Obtendo a data atual
       CURRENT_DATE=$(date +"%Y-%m-%d")
 
-      # Criando a Release e Tag no GitHub
-      echo "Criando nova release e tag: rc/${{ env.TAG }}"
+      # Verificando se a tag já existe antes de criar a release
+      if git ls-remote --tags origin | grep -q "refs/tags/${{ env.TAG }}"; then
+        echo "A tag ${{ env.TAG }} já existe. Pulando a criação da release."
+      else
+        echo "Criando nova release e tag: rc/${{ env.TAG }}"
 
-      gh release create "${{ env.TAG }}" \
-        --title "${{ inputs.ORIGIN == 'fc' && 'Release' || 'Hotfix' }} ${{ env.TAG }}" \
-        --notes "**Changes in this ${{ inputs.ORIGIN == 'fc' && 'Release' || 'Hotfix' }}**\n\n- Origin: rc/${{ env.TAG }}\n- Release date: $CURRENT_DATE\n- Commit: ${{ github.sha }}" \
-        --draft=false \
-        --prerelease
+        gh release create "${{ env.TAG }}" \
+          --title "${{ inputs.ORIGIN == 'fc' && 'Release' || 'Hotfix' }} ${{ env.TAG }}" \
+          --notes "**Changes in this ${{ inputs.ORIGIN == 'fc' && 'Release' || 'Hotfix' }}**\n\n- Origin: rc/${{ env.TAG }}\n- Release date: $CURRENT_DATE\n- Commit: ${{ github.sha }}" \
+          --draft=false \
+          --prerelease
+      fi
 
       # Verificando se há commits entre as branches antes de criar o PR
       COMMITS_A_MAIS=$(git rev-list --count ${{ steps.current.outputs.CURRENT_BRANCH }}..rc/${{ env.TAG }})
