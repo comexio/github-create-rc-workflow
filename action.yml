@@ -154,12 +154,20 @@ runs:
       COMMITS_A_MAIS=$(git rev-list --count origin/rc/${{ env.TAG }}..origin/${{ steps.current.outputs.CURRENT_BRANCH }})
 
       if [[ "$COMMITS_A_MAIS" -gt 0 ]]; then
-        echo "Criando PR para merge na branch RC"
+        echo "Verificando se o PR já existe para a branch RC"
 
-        gh pr create --base="rc/${{ env.TAG }}" \
-                    --head="${{ steps.current.outputs.CURRENT_BRANCH }}" \
-                    --title="[FC] branch ${{ steps.current.outputs.CURRENT_BRANCH }} to RC/${{ env.TAG }}" \
-                    --body="Pull Request FC to RC"
+        PR_EXISTS=$(gh pr list --base "rc/${{ env.TAG }}" --head "${{ steps.current.outputs.CURRENT_BRANCH }}" --json number --jq '.[].number')
+
+        if [[ -n "$PR_EXISTS" ]]; then
+          echo "Já existe um PR para a branch ${{ steps.current.outputs.CURRENT_BRANCH }} em rc/${{ env.TAG }}. Nenhuma ação necessária."
+        else
+          echo "Criando PR para merge na branch RC"
+
+          gh pr create --base="rc/${{ env.TAG }}" \
+                      --head="${{ steps.current.outputs.CURRENT_BRANCH }}" \
+                      --title="[FC] branch ${{ steps.current.outputs.CURRENT_BRANCH }} to RC/${{ env.TAG }}" \
+                      --body="Pull Request FC to RC"
+        fi
       else
         echo "Nenhum commit novo entre rc/${{ env.TAG }} e ${{ steps.current.outputs.CURRENT_BRANCH }}. PR não será criado."
       fi
