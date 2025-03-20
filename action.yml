@@ -136,7 +136,9 @@ runs:
       CURRENT_DATE=$(date +"%Y-%m-%d")
 
       # Verificando se a tag já existe antes de criar a release
-      if git ls-remote --tags origin | grep -q "refs/tags/${{ env.TAG }}"; then
+      TAG_EXISTS=$(git ls-remote --tags origin | grep -o "refs/tags/${{ env.TAG }}")
+
+      if [[ -n "$TAG_EXISTS" ]]; then
         echo "A tag ${{ env.TAG }} já existe. Pulando a criação da release."
       else
         echo "Criando nova release e tag: rc/${{ env.TAG }}"
@@ -149,7 +151,7 @@ runs:
       fi
 
       # Verificando se há commits entre as branches antes de criar o PR
-      COMMITS_A_MAIS=$(git rev-list --count ${{ steps.current.outputs.CURRENT_BRANCH }}..rc/${{ env.TAG }})
+      COMMITS_A_MAIS=$(git rev-list --count origin/rc/${{ env.TAG }}..origin/${{ steps.current.outputs.CURRENT_BRANCH }})
 
       if [[ "$COMMITS_A_MAIS" -gt 0 ]]; then
         echo "Criando PR para merge na branch RC"
