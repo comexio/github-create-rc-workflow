@@ -111,7 +111,7 @@ runs:
   - if: env.exists == 'false'
     shell: bash
     run: |
-      set -e  # Interrompe o script em caso de erro
+      set -ex
 
       echo "New Release Candidate is rc/${{ env.TAG }}"
 
@@ -120,21 +120,22 @@ runs:
       git checkout main
       git pull --rebase origin main
 
-      # Verifica se a branch RC já existe no repositório remoto
-      if git ls-remote --exit-code --heads origin rc/${{ env.TAG }}; then
-        echo "Branch rc/${{ env.TAG }} já existe. Atualizando..."
-        git fetch origin rc/${{ env.TAG }}
-
-        # Se já existir localmente, só dá checkout. Se não, cria apontando para o remoto.
-        if git show-ref --quiet refs/heads/rc/${{ env.TAG }}; then
-          git checkout rc/${{ env.TAG }}
-        else
-          git checkout -b rc/${{ env.TAG }} origin/rc/${{ env.TAG }}
-        fi
-
+      # Verifica se a branch existe localmente
+      if git show-ref --quiet refs/heads/rc/${{ env.TAG }}; then
+        echo "Branch rc/${{ env.TAG }} já existe localmente. Dando checkout."
+        git checkout rc/${{ env.TAG }}
         git pull --rebase origin rc/${{ env.TAG }}
+
+      # Verifica se a branch existe no repositório remoto
+      elif git ls-remote --exit-code --heads origin rc/${{ env.TAG }}; then
+        echo "Branch rc/${{ env.TAG }} existe no remoto. Criando local e dando checkout."
+        git fetch origin rc/${{ env.TAG }}
+        git checkout -b rc/${{ env.TAG }} origin/rc/${{ env.TAG }}
+        git pull --rebase origin rc/${{ env.TAG }}
+
+      # Caso não exista nem local nem remoto
       else
-        echo "Criando nova branch rc/${{ env.TAG }}"
+        echo "Branch rc/${{ env.TAG }} não existe. Criando nova branch."
         git checkout -b rc/${{ env.TAG }}
         git push --set-upstream origin rc/${{ env.TAG }}
       fi
