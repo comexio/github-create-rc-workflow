@@ -111,7 +111,7 @@ runs:
   - if: env.exists == 'false'
     shell: bash
     run: |
-      set -ex
+      set -e
 
       echo "New Release Candidate is rc/${{ env.TAG }}"
 
@@ -144,24 +144,31 @@ runs:
       CURRENT_DATE=$(date +"%Y-%m-%d")
 
       # Verificando se a tag já existe antes de criar a release
-      TAG_EXISTS=$(git ls-remote --tags origin | grep -o "refs/tags/${{ env.TAG }}")
-
-      if [[ -n "$TAG_EXISTS" ]]; then
-        echo "A tag ${{ env.TAG }} já existe. Pulando a criação da release."
+      if git ls-remote --tags origin | grep -q "refs/tags/${{ env.TAG }}"; then
+        echo "A tag '${{ env.TAG }}' já existe. Pulando a criação da release."
       else
         echo "Criando nova release e tag: rc/${{ env.TAG }}"
 
-        RELEASE_TYPE=${RELEASE_TYPE:-RC}  # Define como RC se não estiver setado
+        # Definindo o tipo de release se não estiver já setado
+        RELEASE_TYPE=${RELEASE_TYPE:-RC}
 
-        # Criando a release e tratando erro
+        # Garantindo que GITHUB_SHA está disponível no shell
+        COMMIT_SHA="${GITHUB_SHA}"
+
+        # Executando o comando com tratamento de erro
         if ! gh release create "${{ env.TAG }}" \
           --title "$RELEASE_TYPE ${{ env.TAG }}" \
-          --notes "**Changes in this $RELEASE_TYPE**\n\n- Origin: rc/${{ env.TAG }}\n- Release date: $CURRENT_DATE\n- Commit: ${GITHUB_SHA}" \
+          --notes "**Changes in this $RELEASE_TYPE**\n\n- Origin: rc/${{ env.TAG }}\n- Release date: $CURRENT_DATE\n- Commit: $COMMIT_SHA" \
           --draft=false \
           --prerelease; then
-            echo "Erro ao criar a release no GitHub."
-            exit 1
+          echo "Erro ao criar a release no GitHub. Verifique:"
+          echo "- Se o GITHUB_TOKEN tem permissões suficientes"
+          echo "- Se a tag já foi criada e deletada (GitHub mantém histórico)"
+          echo "- Se há problemas de autenticação com a CLI do GitHub (gh)"
+          exit 1
         fi
+
+        echo "Release criada com sucesso!"
       fi
 
       # Verificando se há commits entre as branches antes de criar o PR
