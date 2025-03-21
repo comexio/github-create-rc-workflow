@@ -151,6 +151,8 @@ runs:
       else
         echo "Criando nova release e tag: rc/${{ env.TAG }}"
 
+        RELEASE_TYPE=${RELEASE_TYPE:-RC}  # Define como RC se não estiver setado
+
         gh release create "${{ env.TAG }}" \
           --title "$RELEASE_TYPE ${{ env.TAG }}" \
           --notes "**Changes in this $RELEASE_TYPE**\n\n- Origin: rc/${{ env.TAG }}\n- Release date: $CURRENT_DATE\n- Commit: ${{ github.sha }}" \
