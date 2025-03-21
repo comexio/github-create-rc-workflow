@@ -124,7 +124,14 @@ runs:
       if git ls-remote --exit-code --heads origin rc/${{ env.TAG }}; then
         echo "Branch rc/${{ env.TAG }} já existe. Atualizando..."
         git fetch origin rc/${{ env.TAG }}
-        git checkout rc/${{ env.TAG }}
+
+        # Se já existir localmente, só dá checkout. Se não, cria apontando para o remoto.
+        if git show-ref --quiet refs/heads/rc/${{ env.TAG }}; then
+          git checkout rc/${{ env.TAG }}
+        else
+          git checkout -b rc/${{ env.TAG }} origin/rc/${{ env.TAG }}
+        fi
+
         git pull --rebase origin rc/${{ env.TAG }}
       else
         echo "Criando nova branch rc/${{ env.TAG }}"
