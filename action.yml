@@ -144,7 +144,7 @@ runs:
       CURRENT_DATE=$(date +"%Y-%m-%d")
 
       # Verificando se a tag já existe antes de criar a release
-      if git ls-remote --tags origin | grep -q "refs/tags/${{ env.TAG }}"; then
+      if gh release view "${{ env.TAG }}" > /dev/null 2>&1; then
         echo "A tag '${{ env.TAG }}' já existe. Pulando a criação da release."
       else
         echo "Criando nova release e tag: rc/${{ env.TAG }}"
@@ -161,10 +161,7 @@ runs:
           --notes "**Changes in this $RELEASE_TYPE**\n\n- Origin: rc/${{ env.TAG }}\n- Release date: $CURRENT_DATE\n- Commit: $COMMIT_SHA" \
           --draft=false \
           --prerelease; then
-          echo "Erro ao criar a release no GitHub. Verifique:"
-          echo "- Se o GITHUB_TOKEN tem permissões suficientes"
-          echo "- Se a tag já foi criada e deletada (GitHub mantém histórico)"
-          echo "- Se há problemas de autenticação com a CLI do GitHub (gh)"
+          echo "Erro ao criar a release no GitHub."
           exit 1
         fi
 
