@@ -153,11 +153,15 @@ runs:
 
         RELEASE_TYPE=${RELEASE_TYPE:-RC}  # Define como RC se não estiver setado
 
-        gh release create "${{ env.TAG }}" \
+        # Criando a release e tratando erro
+        if ! gh release create "${{ env.TAG }}" \
           --title "$RELEASE_TYPE ${{ env.TAG }}" \
-          --notes "**Changes in this $RELEASE_TYPE**\n\n- Origin: rc/${{ env.TAG }}\n- Release date: $CURRENT_DATE\n- Commit: ${{ github.sha }}" \
+          --notes "**Changes in this $RELEASE_TYPE**\n\n- Origin: rc/${{ env.TAG }}\n- Release date: $CURRENT_DATE\n- Commit: ${GITHUB_SHA}" \
           --draft=false \
-          --prerelease
+          --prerelease; then
+            echo "Erro ao criar a release no GitHub."
+            exit 1
+        fi
       fi
 
       # Verificando se há commits entre as branches antes de criar o PR
